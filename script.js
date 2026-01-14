@@ -1,96 +1,178 @@
-// Enhanced Liquid Effects & Animations with fixed navbar
-class LiquidPortfolio {
-    constructor() {
-        this.init();
-    }
+// Mobile menu toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
+    const navToggle = document.querySelector('.nav-toggle');
+    const navMenu = document.querySelector('.nav-menu');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const navActions = document.querySelector('.nav-actions');
+    const sections = document.querySelectorAll('section');
+    const navIndicator = document.querySelector('.nav-indicator');
+    const nav = document.querySelector('.liquid-nav');
     
-    init() {
-        this.createLiquidBackground();
-        this.initSmoothScroll();
-        this.initScrollAnimations();
-        this.initNavigation();
-        this.initParallax();
-        this.initInteractiveEffects();
-        this.initDownloadResume();
-    }
+    // Toast notification system
+    let toastTimeout;
     
-    // Create dynamic liquid blobs
-    createLiquidBackground() {
-        const container = document.querySelector('.liquid-container');
-        const colors = [
-            'rgba(14, 165, 233, 0.4)',
-            'rgba(129, 140, 248, 0.4)',
-            'rgba(30, 58, 138, 0.4)',
-            'rgba(88, 28, 135, 0.4)'
-        ];
+    // Initialize mobile menu
+    function initMobileMenu() {
+        if (!navToggle || !navMenu) return;
         
-        // Add more blobs for richer effect
-        for (let i = 0; i < 6; i++) {
-            const blob = document.createElement('div');
-            blob.className = 'liquid-blob';
-            blob.style.background = colors[Math.floor(Math.random() * colors.length)];
-            blob.style.width = `${Math.random() * 400 + 200}px`;
-            blob.style.height = blob.style.width;
-            blob.style.left = `${Math.random() * 100}%`;
-            blob.style.top = `${Math.random() * 100}%`;
-            blob.style.animationDuration = `${Math.random() * 20 + 15}s`;
-            blob.style.animationDelay = `${Math.random() * 10}s`;
-            container.appendChild(blob);
+        navToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleMobileMenu();
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (navMenu.classList.contains('active') && 
+                !navMenu.contains(e.target) && 
+                !navToggle.contains(e.target)) {
+                closeMobileMenu();
+            }
+        });
+        
+        // Close menu when clicking a nav link
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                closeMobileMenu();
+            });
+        });
+        
+        // Close menu on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && navMenu.classList.contains('active')) {
+                closeMobileMenu();
+            }
+        });
+    }
+    
+    // Toggle mobile menu
+    function toggleMobileMenu() {
+        const isActive = navMenu.classList.toggle('active');
+        const icon = navToggle.querySelector('i');
+        
+        if (isActive) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+            document.body.style.overflow = 'hidden';
+            
+            // Add mobile contact button
+            if (navActions && !document.querySelector('.nav-actions.mobile-visible')) {
+                const mobileActions = navActions.cloneNode(true);
+                mobileActions.classList.add('mobile-visible');
+                navMenu.appendChild(mobileActions);
+            }
+        } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+            document.body.style.overflow = '';
+            
+            // Remove mobile contact button
+            const mobileActions = document.querySelector('.nav-actions.mobile-visible');
+            if (mobileActions) {
+                mobileActions.remove();
+            }
+        }
+        
+        // Toggle nav transparency on mobile
+        if (window.innerWidth <= 768) {
+            if (isActive) {
+                nav.style.background = 'rgba(10, 17, 35, 0.95)';
+            } else {
+                setTimeout(() => {
+                    nav.style.background = '';
+                }, 300);
+            }
         }
     }
     
-    // Enhanced smooth scroll with easing
-    initSmoothScroll() {
-        const links = document.querySelectorAll('a[href^="#"]');
+    // Close mobile menu
+    function closeMobileMenu() {
+        navMenu.classList.remove('active');
+        const icon = navToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+        document.body.style.overflow = '';
         
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
+        // Remove mobile contact button
+        const mobileActions = document.querySelector('.nav-actions.mobile-visible');
+        if (mobileActions) {
+            mobileActions.remove();
+        }
+    }
+    
+    // Update nav indicator position
+    function updateNavIndicator() {
+        const activeLink = document.querySelector('.nav-link.active');
+        
+        if (activeLink && navIndicator && window.innerWidth > 768) {
+            const linkRect = activeLink.getBoundingClientRect();
+            const navRect = activeLink.closest('.nav-menu').getBoundingClientRect();
+            
+            navIndicator.style.width = `${linkRect.width}px`;
+            navIndicator.style.left = `${linkRect.left - navRect.left}px`;
+            navIndicator.style.opacity = '1';
+        } else if (navIndicator) {
+            navIndicator.style.opacity = '0';
+        }
+    }
+    
+    // Update active nav link on scroll
+    function updateActiveNavLink() {
+        let current = '';
+        const navHeight = nav ? nav.offsetHeight : 70;
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            
+            if (window.scrollY >= (sectionTop - navHeight - 100)) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+        
+        updateNavIndicator();
+    }
+    
+    // Smooth scrolling for anchor links
+    function initSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                
+                if (href === '#' || !href.startsWith('#')) return;
+                
                 e.preventDefault();
+                const targetElement = document.querySelector(href);
                 
-                const targetId = link.getAttribute('href');
-                if (targetId === '#') return;
-                
-                const targetElement = document.querySelector(targetId);
-                if (!targetElement) return;
-                
-                // Calculate position with navbar offset (navbar is always visible)
-                const headerHeight = document.querySelector('.liquid-nav').offsetHeight + 40; // 40px extra padding
-                const targetPosition = targetElement.offsetTop - headerHeight;
-                
-                window.scrollTo({
-                    top: targetPosition,
-                    behavior: 'smooth'
-                });
-                
-                // Update active nav link
-                this.updateActiveLink(link);
+                if (targetElement) {
+                    const navHeight = nav ? nav.offsetHeight : 70;
+                    const targetPosition = targetElement.offsetTop - navHeight;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Update URL without jumping
+                    history.pushState(null, null, href);
+                }
             });
         });
     }
     
-    // Update active navigation link
-    updateActiveLink(clickedLink) {
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        clickedLink.classList.add('active');
-        
-        // Move nav indicator
-        const indicator = document.querySelector('.nav-indicator');
-        const rect = clickedLink.getBoundingClientRect();
-        const navRect = document.querySelector('.nav-menu').getBoundingClientRect();
-        
-        if (indicator && rect && navRect) {
-            indicator.style.width = `${rect.width}px`;
-            indicator.style.left = `${rect.left - navRect.left}px`;
-        }
-    }
-    
-    // Scroll animations with Intersection Observer
-    initScrollAnimations() {
+    // Intersection Observer for animations
+    function initScrollAnimations() {
         const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
         };
         
         const observer = new IntersectionObserver((entries) => {
@@ -98,179 +180,57 @@ class LiquidPortfolio {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('animate-in');
                     
-                    // Stagger children animations
-                    const children = entry.target.querySelectorAll('[data-animate]');
-                    children.forEach((child, index) => {
-                        child.style.animationDelay = `${index * 0.1}s`;
-                        child.classList.add('animate-in');
-                    });
+                    // For timeline items, add staggered animation
+                    if (entry.target.classList.contains('timeline-item')) {
+                        const index = Array.from(entry.target.parentNode.children).indexOf(entry.target);
+                        entry.target.style.transitionDelay = `${index * 0.1}s`;
+                    }
                 }
             });
         }, observerOptions);
         
-        // Observe all sections and cards
-        document.querySelectorAll('section, .card, .project-card, .timeline-item, .leadership-card').forEach(el => {
+        // Observe elements to animate
+        const animatedElements = document.querySelectorAll(
+            '.timeline-item, .project-card, .craft-card, .leadership-card, .hero-visual, .connect-card'
+        );
+        
+        animatedElements.forEach(el => {
             observer.observe(el);
         });
     }
     
-    // Navigation - Update active section on scroll (navbar stays visible)
-    initNavigation() {
-        // Update active section based on scroll
-        const updateActiveSection = () => {
-            const sections = document.querySelectorAll('section[id]');
-            const scrollPosition = window.scrollY + 150; // Adjusted for fixed navbar
-            
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                const sectionHeight = section.offsetHeight;
-                const sectionId = section.getAttribute('id');
-                
-                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                    const correspondingLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
-                    if (correspondingLink && !correspondingLink.classList.contains('active')) {
-                        this.updateActiveLink(correspondingLink);
-                    }
-                }
-            });
-        };
-        
-        // Update on scroll
-        window.addEventListener('scroll', updateActiveSection);
-        
-        // Initialize on load
-        updateActiveSection();
-    }
-    
-    // Interactive hover effects
-    initInteractiveEffects() {
-        const interactiveElements = document.querySelectorAll('.btn-liquid, .project-card, .craft-card, .leadership-card');
-        
-        interactiveElements.forEach(element => {
-            element.addEventListener('mouseenter', () => {
-                element.style.transform = 'translateY(-5px) scale(1.02)';
-            });
-            
-            element.addEventListener('mouseleave', () => {
-                element.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-        
-        // Button liquid effect
-        const liquidButtons = document.querySelectorAll('.btn-liquid');
-        liquidButtons.forEach(button => {
-            button.addEventListener('mouseenter', () => {
-                const effect = button.querySelector('.btn-liquid-effect');
-                if (effect) {
-                    effect.style.transform = 'rotate(30deg) translateX(100%)';
-                }
-            });
-            
-            button.addEventListener('mouseleave', () => {
-                const effect = button.querySelector('.btn-liquid-effect');
-                if (effect) {
-                    effect.style.transform = 'rotate(30deg) translateX(-100%)';
-                }
-            });
-        });
-    }
-    
-    // Parallax effects
-    initParallax() {
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            
-            // Blob parallax
-            const blobs = document.querySelectorAll('.liquid-blob');
-            blobs.forEach((blob, index) => {
-                const speed = 0.1 + (index * 0.05);
-                blob.style.transform = `translateY(${scrolled * speed}px)`;
-            });
-        });
-    }
-    
-    // Download Resume functionality
-    initDownloadResume() {
-        // Add event listeners to all download buttons
-        const downloadButtons = document.querySelectorAll('.download-resume');
-        downloadButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.downloadResume();
-            });
-        });
-    }
-    
-    // Download resume function
-    downloadResume() {
-        // Create a simple PDF download simulation
-        // In production, replace with actual resume file
-        const resumeContent = `
-            CHANDAN MISHRA
-            System Analyst
-            
-            Contact:
-            Kolkata, India
-            +91 7679236432
-            ichandanmsr@gmail.com
-            linkedin.com/in/chandanmsr
-            
-            PROFESSIONAL SUMMARY
-            Analytical and results-driven professional with experience in system analysis and product development for SaaS HRMS platforms.
-            
-            EXPERIENCE
-            System Analyst, Inner Eye Consultancy Services LLP
-            • Spearheaded the streamlining of flagship HRMS software
-            • Authored comprehensive SRS and Process Flow diagrams
-            • Managed project timelines via Zoho Projects
-            
-            Technical Content Intern, Unstop
-            • Designed 1000+ coding assessments and technical content modules
-            
-            EDUCATION
-            Amity University Kolkata - MCA (8.17 CGPA)
-            University of North Bengal - B.Sc CS (8.53 CGPA)
-            
-            SKILLS
-            Python, SQL, Java, PySpark, Git, Jira, Agile, Product Analytics
-            
-            Download full resume from: https://www.linkedin.com/in/chandanmsr/
-        `;
-        
-        // Create a blob and download link
-        const blob = new Blob([resumeContent], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Chandan_Mishra_Resume.txt';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        // Show a toast notification
-        this.showToast('Resume download started! In production, this would be your actual PDF resume.');
-    }
-    
-    // Show toast notification
-    showToast(message) {
-        // Remove existing toast
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Clear existing toast
         const existingToast = document.querySelector('.toast-notification');
-        if (existingToast) existingToast.remove();
+        if (existingToast) {
+            existingToast.remove();
+            clearTimeout(toastTimeout);
+        }
         
-        // Create toast
+        // Create new toast
         const toast = document.createElement('div');
         toast.className = 'toast-notification';
         toast.textContent = message;
+        
+        // Add type class for different styles
+        if (type === 'success') {
+            toast.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+            toast.style.background = 'rgba(34, 197, 94, 0.1)';
+        } else if (type === 'error') {
+            toast.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            toast.style.background = 'rgba(239, 68, 68, 0.1)';
+        }
+        
         document.body.appendChild(toast);
         
-        // Show toast
+        // Trigger animation
         setTimeout(() => {
             toast.classList.add('show');
         }, 10);
         
-        // Hide toast after 3 seconds
-        setTimeout(() => {
+        // Auto remove after 3 seconds
+        toastTimeout = setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => {
                 if (toast.parentNode) {
@@ -278,81 +238,359 @@ class LiquidPortfolio {
                 }
             }, 300);
         }, 3000);
+        
+        // Click to dismiss
+        toast.addEventListener('click', () => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        });
     }
+    
+    // Copy to clipboard functionality
+    function initCopyToClipboard() {
+        // Email copy
+        const emailLinks = document.querySelectorAll('a[href^="mailto:"]');
+        emailLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.classList.contains('no-copy')) return;
+                
+                const email = this.href.replace('mailto:', '');
+                copyToClipboard(email, 'Email copied to clipboard!');
+            });
+        });
+        
+        // Phone copy
+        const phoneLinks = document.querySelectorAll('a[href^="tel:"]');
+        phoneLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.classList.contains('no-copy')) return;
+                
+                const phone = this.href.replace('tel:', '');
+                copyToClipboard(phone, 'Phone number copied to clipboard!');
+            });
+        });
+    }
+    
+    // Generic copy to clipboard function
+    async function copyToClipboard(text, successMessage) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast(successMessage, 'success');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            showToast('Failed to copy to clipboard', 'error');
+        }
+    }
+    
+    // Handle window resize
+    let resizeTimer;
+    function handleResize() {
+        document.body.classList.add('resizing');
+        clearTimeout(resizeTimer);
+        
+        resizeTimer = setTimeout(() => {
+            document.body.classList.remove('resizing');
+            
+            // Close mobile menu if resizing to desktop
+            if (window.innerWidth > 768 && navMenu && navMenu.classList.contains('active')) {
+                closeMobileMenu();
+            }
+            
+            // Update nav indicator
+            updateNavIndicator();
+        }, 250);
+    }
+    
+    // Add parallax effect to background
+    // function initParallax() {
+    //     const liquidContainer = document.querySelector('.liquid-container');
+    //     if (!liquidContainer) return;
+        
+    //     window.addEventListener('scroll', () => {
+    //         const scrolled = window.pageYOffset;
+    //         const rate = scrolled * -0.5;
+            
+    //         liquidContainer.style.transform = `translate3d(0, ${rate}px, 0)`;
+    //     });
+    // }
+    
+    // Handle form submissions (if any forms are added later)
+    function handleFormSubmissions() {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : 'Send';
+                
+                // Show loading state
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                    submitBtn.disabled = true;
+                }
+                
+                try {
+                    // Simulate API call - replace with actual form submission
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    showToast('Message sent successfully!', 'success');
+                    this.reset();
+                } catch (error) {
+                    showToast('Failed to send message. Please try again.', 'error');
+                } finally {
+                    // Restore button state
+                    if (submitBtn) {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }
+                }
+            });
+        });
+    }
+    
+    // Initialize scroll-based nav background
+    function initNavScrollEffect() {
+        if (!nav) return;
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(10, 17, 35, 0.95)';
+                nav.style.backdropFilter = 'blur(25px) saturate(180%)';
+                nav.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)';
+            } else {
+                nav.style.background = '';
+                nav.style.backdropFilter = '';
+                nav.style.boxShadow = '';
+            }
+        });
+    }
+    
+    // Prevent zoom on double-tap on mobile
+    function preventDoubleTapZoom() {
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    }
+    
+    // Initialize typing effect for hero section (optional)
+    function initTypingEffect() {
+        const heroHeadline = document.querySelector('.hero-headline');
+        if (!heroHeadline) return;
+        
+        // Add a subtle typing animation to the code window
+        const codeElement = document.querySelector('.code-content code');
+        if (codeElement) {
+            const originalCode = codeElement.textContent;
+            codeElement.textContent = '';
+            
+            let i = 0;
+            function typeWriter() {
+                if (i < originalCode.length) {
+                    codeElement.textContent += originalCode.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 30);
+                }
+            }
+            
+            // Start typing when code is in view
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    setTimeout(typeWriter, 500);
+                    observer.disconnect();
+                }
+            }, { threshold: 0.5 });
+            
+            observer.observe(codeElement);
+        }
+    }
+    
+    // Initialize everything
+    function init() {
+        // Initialize all features
+        initMobileMenu();
+        initSmoothScroll();
+        initScrollAnimations();
+        initCopyToClipboard();
+        initParallax();
+        handleFormSubmissions();
+        initNavScrollEffect();
+        preventDoubleTapZoom();
+        initTypingEffect();
+        
+        // Set up event listeners
+        window.addEventListener('scroll', updateActiveNavLink);
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('load', () => {
+            updateActiveNavLink();
+            updateNavIndicator();
+            
+            // Add loaded class for fade-in effect
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 100);
+        });
+        
+        // Initial updates
+        updateActiveNavLink();
+        updateNavIndicator();
+        
+        // Add keyboard navigation for menu
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab' && navMenu.classList.contains('active')) {
+                const focusableElements = navMenu.querySelectorAll(
+                    'a[href], button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
+                );
+                
+                if (focusableElements.length === 0) return;
+                
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                
+                if (e.shiftKey && document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                } else if (!e.shiftKey && document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        });
+    }
+    
+    // Start initialization
+    init();
+    
+    // Expose some functions globally for debugging (optional)
+    window.debug = {
+        showToast,
+        updateNavIndicator,
+        closeMobileMenu
+    };
+});
+
+// Handle service worker for PWA (optional - uncomment if needed)
+/*
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful');
+        }).catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+}
+*/
+
+// Performance monitoring
+if ('performance' in window) {
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const perfEntries = performance.getEntriesByType('navigation');
+            if (perfEntries.length > 0) {
+                const navTiming = perfEntries[0];
+                console.log('Page load time:', navTiming.loadEventEnd - navTiming.startTime);
+            }
+        }, 0);
+    });
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const portfolio = new LiquidPortfolio();
-    
-    // Add CSS for animations and toast
-    const style = document.createElement('style');
-    style.textContent = `
-        .animate-in {
-            animation: fadeInUp 0.8s ease-out forwards;
-            opacity: 0;
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Liquid button effect */
-        .btn-liquid:hover .btn-liquid-effect {
-            animation: liquidFlow 0.8s ease-out;
-        }
-        
-        @keyframes liquidFlow {
-            0% {
-                transform: rotate(30deg) translateX(-100%);
-            }
-            100% {
-                transform: rotate(30deg) translateX(100%);
-            }
-        }
-        
-        /* Interactive card hover */
-        .project-card, .craft-card, .timeline-content, .leadership-card {
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-        
-        /* Toast notification */
-        .toast-notification {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--glass-light);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            z-index: 9999;
-            opacity: 0;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-heavy);
-        }
-        
-        .toast-notification.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-        
-        /* Ensure navbar doesn't hide on mobile */
-        @media (max-width: 768px) {
-            .liquid-main {
-                padding-top: 140px; /* Extra padding for fixed navbar on mobile */
-            }
-        }
-    `;
-    document.head.appendChild(style);
+// Error handling
+window.addEventListener('error', function(e) {
+    console.error('Global error caught:', e.error);
+    // You could send this to an error tracking service
 });
+
+// Handle offline/online status
+window.addEventListener('online', () => {
+    const toast = document.createElement('div');
+    toast.textContent = 'You are back online!';
+    toast.className = 'toast-notification';
+    toast.style.background = 'rgba(34, 197, 94, 0.1)';
+    toast.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+});
+
+window.addEventListener('offline', () => {
+    const toast = document.createElement('div');
+    toast.textContent = 'You are offline. Some features may not work.';
+    toast.className = 'toast-notification';
+    toast.style.background = 'rgba(239, 68, 68, 0.1)';
+    toast.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+});
+
+// Add CSS for any dynamically created elements
+const dynamicStyles = document.createElement('style');
+dynamicStyles.textContent = `
+    .nav-actions.mobile-visible {
+        display: flex !important;
+        margin-top: 1.5rem;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .nav-actions.mobile-visible .btn-contact {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .fa-spin {
+        animation: spin 1s linear infinite;
+    }
+    
+    /* Focus styles for accessibility */
+    *:focus {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
+    }
+    
+    /* Reduced motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+`;
+
+document.head.appendChild(dynamicStyles);
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Already handled by main function
+    });
+} else {
+    // DOM already loaded
+    document.body.classList.add('loaded');
+}
