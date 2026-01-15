@@ -1740,7 +1740,7 @@ body.resizing * {
 /* MOBILE BREAKPOINT - CRITICAL FIXES */
 @media (max-width: 768px) {
     .liquid-nav {
-        width: 80%;
+        width: 100%;
         top: 0;
         left: 0;
         transform: none;
