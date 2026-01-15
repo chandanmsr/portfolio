@@ -306,17 +306,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add parallax effect to background
-    // function initParallax() {
-    //     const liquidContainer = document.querySelector('.liquid-container');
-    //     if (!liquidContainer) return;
+    function initParallax() {
+        const liquidContainer = document.querySelector('.liquid-container');
+        if (!liquidContainer) return;
         
-    //     window.addEventListener('scroll', () => {
-    //         const scrolled = window.pageYOffset;
-    //         const rate = scrolled * -0.5;
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const rate = scrolled * -0.5;
             
-    //         liquidContainer.style.transform = `translate3d(0, ${rate}px, 0)`;
-    //     });
-    // }
+            liquidContainer.style.transform = `translate3d(0, ${rate}px, 0)`;
+        });
+    }
     
     // Handle form submissions (if any forms are added later)
     function handleFormSubmissions() {
